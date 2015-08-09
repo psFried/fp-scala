@@ -36,6 +36,11 @@ sealed abstract class SinglyLinkedList[+A] {
       case Cons(h, t) => f(h, t.foldRight(ident, f))
     }
   }
+
+  def append[B >: A](b: SinglyLinkedList[B]): SinglyLinkedList[B] = this match {
+    case Nope => b
+    case Cons(h, t) => Cons(h, t.append(b))
+  }
 }
 
 case object Nope extends SinglyLinkedList[Nothing] {
@@ -149,6 +154,22 @@ class SinglyLinkedListTest extends path.FunSpec with Matchers {
       it("sums the list using foldLeft") {
         val expectedSum = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10
         assert(expectedSum == startList.foldLeft[Int](0, _ + _))
+      }
+    }
+
+    describe("concatenating two lists") {
+      val l1 = SinglyLinkedList(1, 2, 3)
+      val l2 = SinglyLinkedList(4, 5, 6)
+
+      val joined = l1.append(l2)
+
+      it("joins the two lists together"){
+        assert(joined == SinglyLinkedList(1, 2, 3, 4, 5, 6))
+      }
+
+      it("does not modify either of the original lists") {
+        assert(l1 == SinglyLinkedList(1, 2, 3))
+        assert(l2 == SinglyLinkedList(4, 5, 6))
       }
     }
   }
