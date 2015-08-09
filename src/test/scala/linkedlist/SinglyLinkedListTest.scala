@@ -41,6 +41,29 @@ sealed abstract class SinglyLinkedList[+A] {
     case Nope => b
     case Cons(h, t) => Cons(h, t.append(b))
   }
+
+//  def map[T >: A, R](fun: (T) => R): SinglyLinkedList[R] = this match {
+//    case Nope => Nope
+//    case Cons(h, t) => Cons(fun(h), t.map(fun))
+//  }
+
+  def map[T >: A, R](fun: T => R): SinglyLinkedList[R] = {
+    foldLeft[SinglyLinkedList[R]](Nope, (acc: SinglyLinkedList[R], a: A) => acc.append(Cons(fun(a), Nope)))
+  }
+
+  def flatMap[T >: A, R](fun: T => SinglyLinkedList[R]): SinglyLinkedList[R] = {
+    foldLeft[SinglyLinkedList[R]](Nope, (acc: SinglyLinkedList[R], a: A) => {
+      acc.append(fun(a))
+    })
+  }
+
+  def filter(fun: A => Boolean): SinglyLinkedList[A] = {
+    flatMap[A, A](item => if (fun(item)) Cons(item, Nope) else Nope)
+  }
+
+  def zipWith[T >: A, R](l2: SinglyLinkedList[T], fun: (T, T) => R): SinglyLinkedList[R] = {
+    Nope
+  }
 }
 
 case object Nope extends SinglyLinkedList[Nothing] {
@@ -171,6 +194,45 @@ class SinglyLinkedListTest extends path.FunSpec with Matchers {
         assert(l1 == SinglyLinkedList(1, 2, 3))
         assert(l2 == SinglyLinkedList(4, 5, 6))
       }
+    }
+  }
+
+  describe("mapping list elements"){
+    val start = SinglyLinkedList(1, 2, 3)
+
+    it("changes elements from one type to another") {
+      val result = start.map((i: Int) => i.toString)
+      assert(result == SinglyLinkedList("1", "2", "3"))
+    }
+  }
+
+  describe("filtering list elements") {
+    val numbers = SinglyLinkedList(1, 2, 3, 4, 5, 6, 7)
+
+    it("should filter the list to only include even numbers") {
+      val evens = numbers.filter(i => i % 2 == 0)
+      assert(evens == SinglyLinkedList(2, 4, 6))
+      assert(numbers == SinglyLinkedList(1, 2, 3, 4, 5, 6, 7))
+    }
+  }
+
+  describe("flatMap"){
+    val start = SinglyLinkedList("a", "b", "c")
+
+    it("should return a flat list"){
+      val result = start.flatMap[String, String]((letter: String) => SinglyLinkedList(letter, letter))
+      assert(result == SinglyLinkedList("a", "a", "b", "b", "c", "c"))
+    }
+  }
+
+  describe("zipWith") {
+
+    it("zips to lists of integers") {
+      val l1 = SinglyLinkedList(2, 4, 6)
+      val l2 = SinglyLinkedList(8, 6, 4)
+
+      val result = l1.zipWith[Int, Int](l2, (i1, i2) => i1 + i2)
+      assert(result == SinglyLinkedList(10, 10, 10))
     }
   }
 
